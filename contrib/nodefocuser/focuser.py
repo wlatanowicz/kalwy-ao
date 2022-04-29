@@ -6,9 +6,10 @@ import json
 
 class Device:
     MIN_POSITION = 0
-    MAX_POSITION = 15000
+    MAX_POSITION = 64500  # 40mm for RC6 focuser
 
     MIN_SPEED = 10
+    DEFAULT_SPEED = 250
     MAX_SPEED = 300
 
     DIR_UP = 1
@@ -39,7 +40,7 @@ class Device:
 
     uart = None
 
-    speed = 100
+    speed = DEFAULT_SPEED
     IDLE_SLEEP = 0.05
 
     last_saved_position = None

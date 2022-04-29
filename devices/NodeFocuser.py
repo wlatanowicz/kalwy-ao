@@ -27,6 +27,8 @@ class NodeFocuser(Driver):
     NUM_BOOKMARKS = 10
 
     MANUAL_MOVES = (10, 50, 100, 500, 1000)
+    MIN_POSITION = 0
+    MAX_POSITION = 64500
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +63,7 @@ class NodeFocuser(Driver):
         "POSITION",
         enabled=False,
         vectors=dict(
-            position=standard.focuser.AbsolutePosition(min=0, max=15000, step=1),
+            position=standard.focuser.AbsolutePosition(min=MIN_POSITION, max=MAX_POSITION, step=1),
             motion=standard.focuser.FocusMotion(),
             rel_position=standard.focuser.RelativePosition(),
             fmax=standard.focuser.FocusMax(),
