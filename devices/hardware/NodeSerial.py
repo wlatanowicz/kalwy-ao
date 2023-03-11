@@ -1,9 +1,6 @@
-import math
-import time
 import json
 import threading
 
-import requests
 import serial
 
 

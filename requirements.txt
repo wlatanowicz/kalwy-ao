@@ -1,3 +1,4 @@
 requests
 pyserial
-indipy==0.2.0
+indipy>=0.3.0
+django-environ
