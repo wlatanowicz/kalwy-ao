@@ -2,3 +2,5 @@ env
 pub
 __pycache__
 .mypy_cache
+BOOKMARKS.json
+.env

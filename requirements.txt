@@ -1,4 +1,4 @@
-git+https://github.com/wlatanowicz/indipy.git
-requests==2.20.0
-git+https://github.com/Pithikos/python-websocket-server
-websocket-client==0.54.0
+requests
+pyserial
+indipy>=0.3.0
+django-environ

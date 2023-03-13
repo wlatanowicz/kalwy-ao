@@ -2,10 +2,11 @@
 
 import os
 from logging import config
+
+from indi.routing import Router
 from devices import *
 from indi.device.pool import default_pool
-from indi.routing import Router
-from indi.transport.server import TCP as TCPServer
+from indi.transport.server import TTY as TTYServer
 
 router = Router()
 
@@ -41,8 +42,7 @@ config.dictConfig(
     }
 )
 
-
 default_pool.init(router)
 
-server = TCPServer(router=router)
+server = TTYServer(router=router)
 server.start()

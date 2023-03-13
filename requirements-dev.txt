@@ -1,1 +1,0 @@
-git+https://github.com/wlatanowicz/telescopy-sims.git
