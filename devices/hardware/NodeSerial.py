@@ -10,6 +10,7 @@ class NodeSerial:
 
         self.reader: Optional[asyncio.StreamReader] = None
         self.writer: Optional[asyncio.StreamWriter] = None
+        self.connected = False
 
         self.onupdate = onupdate
 
