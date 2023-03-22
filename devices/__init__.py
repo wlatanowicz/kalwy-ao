@@ -1,2 +1,2 @@
-from .NodeFocuser import NodeFocuser
+from .Focuser import Focuser
 from .Flattener import Flattener

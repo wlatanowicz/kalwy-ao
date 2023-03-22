@@ -1,15 +1,17 @@
 import json
-import threading
-
-import serial
-
+import asyncio
+from serial_asyncio import open_serial_connection
+from typing import Optional
 
 class NodeSerial:
     def __init__(self, port, onupdate):
         self.port = port
         self.baud = 9600
 
-        self.connection = None
+        self.reader: Optional[asyncio.StreamReader] = None
+        self.writer: Optional[asyncio.StreamWriter] = None
+        self.connected = False
+
         self.onupdate = onupdate
 
         self.current_position = None
@@ -19,7 +21,9 @@ class NodeSerial:
         self.is_connected = True
 
     def set_position(self, position):
-        self._send_command(position=position)
+        asyncio.get_running_loop().create_task(
+            self._send_command(position=position)
+        )
 
     def get_position(self):
         return self.current_position
@@ -28,21 +32,33 @@ class NodeSerial:
         return self.current_status
 
     def reset_position(self, position):
-        self._send_command(reset=position)
+        asyncio.get_running_loop().create_task(
+            self._send_command(reset=position)
+        )
 
     def set_speed(self, speed):
-        self._send_command(speed=speed)
+        asyncio.get_running_loop().create_task(
+            self._send_command(speed=speed)
+        )
 
-    def _send_command(self, **cmd):
-        if self.connection.is_open:
-            self.connection.write(json.dumps(cmd).encode())
+    async def _send_command(self, **cmd):
+        if self.connected and self.writer:
+            self.writer.write(json.dumps(cmd).encode())
+            await self.writer.drain()
 
     def connect(self):
-        self.connection = serial.Serial(self.port, self.baud)
+        if not self.connected:
+            asyncio.get_running_loop().create_task(self.listener())
 
-        def connection_thread():
-            while self.connection.is_open:
-                in_data = self.connection.readline()
+    def disconnect(self):
+        self.connected = False
+
+    async def listener(self):
+        self.reader, self.writer = await open_serial_connection(url=self.port, baudrate=self.baud)
+        self.connected = True
+        try:
+            while self.connected:
+                in_data = await self.reader.readline()
                 if not in_data:
                     continue
 
@@ -56,9 +72,11 @@ class NodeSerial:
                         self.current_status = status["status"]
                         self._last_update = status
                         self.onupdate()
+        finally:
+            self.connected = False
 
-        th = threading.Thread(target=connection_thread)
-        th.start()
+        self.writer.close()
+        await self.writer.wait_closed()
 
-    def disconnect(self):
-        self.connection.close()
+        self.reader = None
+        self.writer = None

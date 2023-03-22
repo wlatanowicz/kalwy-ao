@@ -1,7 +1,6 @@
 import logging
-import time
 
-from indi.device import Driver, non_blocking, properties
+from indi.device import Driver, properties
 from indi.device.pool import default_pool
 from indi.message import const
 from indi.message import DelProperty
@@ -76,7 +75,6 @@ class Flattener(Driver):
         )
 
     @on(general.connection.connect, Write)
-    @non_blocking
     def connect(self, event):
         value = event.new_value
         connected = value == const.SwitchState.ON
@@ -93,8 +91,7 @@ class Flattener(Driver):
 
     @on(main_control.light_control.on, Write)
     @on(main_control.light_control.off, Write)
-    @non_blocking
-    def toggle(self, event):
+    async def toggle(self, event):
         event.prevent_default = True
         if event.element.name == self.main_control.light_control.on.name:
             state = event.new_value == const.SwitchState.ON
@@ -102,7 +99,7 @@ class Flattener(Driver):
             state = not event.new_value == const.SwitchState.ON
         self.main_control.light_control.state_ = const.State.BUSY
         try:
-            self.backend.set_state(state)
+            await self.backend.set_state(state)
         except Exception as ex:
             logger.exception("Error setting switch state in HA")
             self.main_control.light_control.state_ = const.State.ALERT
