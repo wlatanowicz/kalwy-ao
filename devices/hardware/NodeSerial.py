@@ -55,6 +55,7 @@ class NodeSerial:
 
     async def listener(self):
         self.reader, self.writer = await open_serial_connection(url=self.port, baudrate=self.baud)
+        self.connected = True
         try:
             while self.connected:
                 in_data = await self.reader.readline()
