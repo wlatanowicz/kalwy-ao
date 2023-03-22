@@ -24,9 +24,7 @@ logger = logging.getLogger(__name__)
 @default_pool.register
 class NodeFocuser(Driver):
     name = "NODE_FOCUSER"
-    NUM_BOOKMARKS = 10
 
-    MANUAL_MOVES = (10, 50, 100, 500, 1000)
     MIN_POSITION = 0
     MAX_POSITION = 64500
 
@@ -79,66 +77,6 @@ class NodeFocuser(Driver):
         ),
     )
 
-    bookmarks = properties.Group(
-        "BOOKMARKS",
-        enabled=False,
-        vectors={
-            **{
-                f"save{i}": properties.TextVector(
-                    f"SAVE_BOOKMARK_{i}",
-                    elements={
-                        f"bookmark{i}": properties.Text(
-                            f"SAVE_BOOKMARK_{i}",
-                        )
-                    },
-                )
-                for i in range(NUM_BOOKMARKS)
-            },
-            **dict(
-                restore=properties.SwitchVector(
-                    "RESTORE_BOOKMARK",
-                    rule=const.SwitchRule.AT_MOST_ONE,
-                    elements={
-                        f"bookmark{i}": properties.Switch(
-                            f"RESTORE_BOOKMARK_{i}",
-                            default=const.SwitchState.OFF,
-                        )
-                        for i in range(NUM_BOOKMARKS)
-                    },
-                ),
-            ),
-        },
-    )
-
-    manual = properties.Group(
-        "MANUAL_FOCUS",
-        enabled=False,
-        vectors=dict(
-            inward=properties.SwitchVector(
-                "MANUAL_INWARD",
-                rule=const.SwitchRule.AT_MOST_ONE,
-                elements={
-                    f"inward{m}": properties.Switch(
-                        f"MANUAL_INWARD_{m}",
-                        default=const.SwitchState.OFF,
-                    )
-                    for m in MANUAL_MOVES
-                },
-            ),
-            outward=properties.SwitchVector(
-                "MANUAL_OUTWARD",
-                rule=const.SwitchRule.AT_MOST_ONE,
-                elements={
-                    f"outward{m}": properties.Switch(
-                        f"MANUAL_OUTWARD_{m}",
-                        default=const.SwitchState.OFF,
-                    )
-                    for m in MANUAL_MOVES
-                },
-            ),
-        ),
-    )
-
     @on(general.connection.connect, Write)
     @non_blocking
     def connect(self, event):
@@ -171,13 +109,6 @@ class NodeFocuser(Driver):
         self.manual.enabled = connected
         self.load_bookmarks()
 
-    def device_updated(self):
-        self.position.position.position.state_ = (
-            const.State.OK if self.focuser.get_status() == "idle" else const.State.BUSY
-        )
-        self.position.position.position.value = self.focuser.get_position()
-
-
     @on(position.position.position, Write)
     def reposition(self, event):
         value = event.new_value
@@ -198,6 +129,105 @@ class NodeFocuser(Driver):
         self.focuser.set_position(new_value)
 
         self.position.rel_position.position.state_ = const.State.OK
+
+    def device_updated(self):
+        self.position.position.position.state_ = (
+            const.State.OK if self.focuser.get_status() == "idle" else const.State.BUSY
+        )
+        self.position.position.position.value = self.focuser.get_position()
+
+    #
+    # MANUAL MOVEMENT:
+    #
+
+    MANUAL_MOVES = (10, 50, 100, 500, 1000)
+
+    manual = properties.Group(
+        "MANUAL_FOCUS",
+        enabled=False,
+        vectors=dict(
+            inward=properties.SwitchVector(
+                "MANUAL_INWARD",
+                rule=const.SwitchRule.AT_MOST_ONE,
+                elements={
+                    f"inward{m}": properties.Switch(
+                        f"MANUAL_INWARD_{m}",
+                        default=const.SwitchState.OFF,
+                    )
+                    for m in MANUAL_MOVES
+                },
+            ),
+            outward=properties.SwitchVector(
+                "MANUAL_OUTWARD",
+                rule=const.SwitchRule.AT_MOST_ONE,
+                elements={
+                    f"outward{m}": properties.Switch(
+                        f"MANUAL_OUTWARD_{m}",
+                        default=const.SwitchState.OFF,
+                    )
+                    for m in MANUAL_MOVES
+                },
+            ),
+        ),
+    )
+
+    def manual_move_eventhandler(self, event):
+        sender = event.element
+        _, direction, step_size = sender.name.split("_")
+        step_size = int(step_size)
+
+        current_position = self.position.position.position.value
+        direction = 1 if direction == "OUTWARD" else -1
+        new_value = current_position + direction * step_size
+
+        self.focuser.set_position(new_value)
+
+        for d in ("inward", "outward"):
+            for m in self.MANUAL_MOVES:
+                getattr(
+                    getattr(self.manual, d), f"{d}{m}"
+                ).value = const.SwitchState.OFF
+
+    for m in MANUAL_MOVES:
+        on(getattr(manual.inward, f"inward{m}"), Write)(manual_move_eventhandler)
+        on(getattr(manual.outward, f"outward{m}"), Write)(manual_move_eventhandler)
+
+    #
+    # BOOKMARKS:
+    #
+
+    NUM_BOOKMARKS = 10
+
+    bookmarks = properties.Group(
+        "BOOKMARKS",
+        enabled=False,
+        vectors={
+            **{
+                f"save{i}": properties.TextVector(
+                    f"SAVE_BOOKMARK_{i}",
+                    elements={
+                        f"bookmark{i}": properties.Text(
+                            f"SAVE_BOOKMARK_{i}",
+                        )
+                    },
+                )
+                for i in range(NUM_BOOKMARKS)
+            },
+            **dict(
+                restore=properties.SwitchVector(
+                    "RESTORE_BOOKMARK",
+                    rule=const.SwitchRule.AT_MOST_ONE,
+                    elements={
+                        f"bookmark{i}": properties.Switch(
+                            f"RESTORE_BOOKMARK_{i}",
+                            default=const.SwitchState.OFF,
+                        )
+                        for i in range(NUM_BOOKMARKS)
+                    },
+                ),
+            ),
+        },
+    )
 
     def _save_file_path(self):
         return os.path.join(os.path.dirname(__file__), "BOOKMARKS.json")
@@ -262,27 +292,6 @@ class NodeFocuser(Driver):
                 if i != idx:
                     save, restore = self._get_bookmark_elements(i)
                     restore.value = const.SwitchState.OFF
-
-    def manual_move_eventhandler(self, event):
-        sender = event.element
-        _, direction, step_size = sender.name.split("_")
-        step_size = int(step_size)
-
-        current_position = self.position.position.position.value
-        direction = 1 if direction == "OUTWARD" else -1
-        new_value = current_position + direction * step_size
-
-        self.focuser.set_position(new_value)
-
-        for d in ("inward", "outward"):
-            for m in self.MANUAL_MOVES:
-                getattr(
-                    getattr(self.manual, d), f"{d}{m}"
-                ).value = const.SwitchState.OFF
-
-    for m in MANUAL_MOVES:
-        on(getattr(manual.inward, f"inward{m}"), Write)(manual_move_eventhandler)
-        on(getattr(manual.outward, f"outward{m}"), Write)(manual_move_eventhandler)
 
     for i in range(NUM_BOOKMARKS):
         on(getattr(getattr(bookmarks, f"save{i}"), f"bookmark{i}"), Write)(save_bookmark_eventhandler)
