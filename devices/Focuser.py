@@ -1,7 +1,7 @@
 import logging
-import time
+import asyncio
 
-from indi.device import Driver, non_blocking, properties
+from indi.device import Driver, properties
 from indi.device.pool import default_pool
 from indi.message import const
 from indi.message import DelProperty
@@ -13,16 +13,13 @@ import settings
 import os
 import json
 
-if os.environ.get("SIM", None):
-    from .hardware.NodeSim import NodeSim as NodeHardware
-else:
-    from .hardware.NodeSerial import NodeSerial as NodeHardware
+from .hardware.NodeSerial import NodeSerial as NodeHardware
 
 logger = logging.getLogger(__name__)
 
 
-@default_pool.register
-class NodeFocuser(Driver):
+# @default_pool.register
+class Focuser(Driver):
     name = "NODE_FOCUSER"
 
     MIN_POSITION = 0
@@ -78,8 +75,7 @@ class NodeFocuser(Driver):
     )
 
     @on(general.connection.connect, Write)
-    @non_blocking
-    def connect(self, event):
+    async def connect(self, event):
         value = event.new_value
         connected = value == const.SwitchState.ON
         self.general.connection.state_ = const.State.BUSY
@@ -89,7 +85,7 @@ class NodeFocuser(Driver):
                 self.focuser.connect()
                 pos = None
                 for _ in range(30):
-                    time.sleep(1)
+                    asyncio.sleep(1)
                     pos = self.focuser.get_position()
                     if pos is not None:
                         self.position.position.position.reset_value(pos)

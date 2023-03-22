@@ -1,4 +1,5 @@
 requests
-pyserial
-indipy>=0.3.0
+pyserial-asyncio
+indipy>=0.4.0b1
 django-environ
+requests

@@ -1,6 +1,5 @@
 import json
-import threading
-
+import asyncio
 import serial
 
 
@@ -40,25 +39,26 @@ class NodeSerial:
     def connect(self):
         self.connection = serial.Serial(self.port, self.baud)
 
-        def connection_thread():
-            while self.connection.is_open:
-                in_data = self.connection.readline()
-                if not in_data:
-                    continue
-
-                in_data = json.loads(in_data.decode())
-
-                if "status" in in_data:
-                    status = in_data["status"]
-
-                    if status != self._last_update:
-                        self.current_position = status["position"]
-                        self.current_status = status["status"]
-                        self._last_update = status
-                        self.onupdate()
 
         th = threading.Thread(target=connection_thread)
         th.start()
 
     def disconnect(self):
         self.connection.close()
+
+    def polling(self):
+        while self.connection.is_open:
+            in_data = self.connection.readline()
+            if not in_data:
+                continue
+
+            in_data = json.loads(in_data.decode())
+
+            if "status" in in_data:
+                status = in_data["status"]
+
+                if status != self._last_update:
+                    self.current_position = status["position"]
+                    self.current_status = status["status"]
+                    self._last_update = status
+                    self.onupdate()
