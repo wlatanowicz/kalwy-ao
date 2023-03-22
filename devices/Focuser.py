@@ -85,7 +85,7 @@ class Focuser(Driver):
                 self.focuser.connect()
                 pos = None
                 for _ in range(30):
-                    asyncio.sleep(1)
+                    await asyncio.sleep(1)
                     pos = self.focuser.get_position()
                     if pos is not None:
                         self.position.position.position.reset_value(pos)
