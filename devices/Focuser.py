@@ -18,7 +18,7 @@ from .hardware.NodeSerial import NodeSerial as NodeHardware
 logger = logging.getLogger(__name__)
 
 
-# @default_pool.register
+@default_pool.register
 class Focuser(Driver):
     name = "NODE_FOCUSER"
 
