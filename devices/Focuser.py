@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @default_pool.register
 class Focuser(Driver):
-    name = "NODE_FOCUSER"
+    name = "NodeFocuser"
 
     MIN_POSITION = 0
     MAX_POSITION = 64500
