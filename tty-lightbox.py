@@ -4,7 +4,7 @@ import os
 from logging import config
 
 from indi.routing import Router
-from devices import *
+from devices.Flattener import Flattener
 from indi.device.pool import default_pool
 from indi.transport.server import TTY as TTYServer
 import asyncio
