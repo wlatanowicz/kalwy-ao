@@ -103,6 +103,7 @@ class Focuser(Driver):
 
     @on(position.position.position, Write)
     def reposition(self, event):
+        event.prevent_default = True
         value = event.new_value
         self.focuser.set_position(value)
 
