@@ -97,9 +97,6 @@ class Focuser(Driver):
         self.general.connection.connect.bool_value = connected
         self.position.enabled = connected
         self.general.info.enabled = connected
-        self.bookmarks.enabled = connected
-        self.manual.enabled = connected
-        self.load_bookmarks()
 
     @on(position.position.position, Write)
     def reposition(self, event):
