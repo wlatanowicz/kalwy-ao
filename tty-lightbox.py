@@ -1,4 +1,14 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+# "requests",
+# "pyserial-asyncio",
+# "indipy>=0.4.0b1",
+# "django-environ",
+# ]
+# ///
 
 import os
 from logging import config
