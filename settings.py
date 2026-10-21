@@ -6,7 +6,7 @@ env.read_env(BASE_DIR('.env'))
 
 
 FOCUSER_IP = "192.168.5.51"
-FOCUSER_PORT = "/dev/ttyAMA1"
+FOCUSER_PORT = "/dev/ttyAMA2"
 
 HA_HOST = "http://192.168.1.11:8123"
 HA_TOKEN = env("HA_TOKEN")
