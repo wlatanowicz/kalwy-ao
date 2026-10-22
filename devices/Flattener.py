@@ -108,7 +108,8 @@ class Flattener(Driver):
     def on_update(self):
         state = self.backend.current_state
         light = self.main_control.light_control
-        if state == self._published_light_state and light.state_ != const.State.BUSY:
+        expected = const.State.OK if state in ("on", "off") else const.State.ALERT
+        if state == self._published_light_state and light.state_ == expected:
             return
 
         if state == "on":
