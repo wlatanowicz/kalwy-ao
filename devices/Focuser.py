@@ -72,6 +72,7 @@ class Focuser(Driver):
 
     @on(general.connection.connect, Write)
     async def connect(self, event):
+        event.prevent_default = True
         value = event.new_value
         connected = value == const.SwitchState.ON
         self.general.connection.state_ = const.State.BUSY
