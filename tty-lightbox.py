@@ -5,7 +5,7 @@
 # dependencies = [
 # "requests",
 # "pyserial-asyncio",
-# "indipy>=0.4.0b1",
+# "indipy>=0.5.0b2",
 # "django-environ",
 # ]
 # ///
