@@ -21,6 +21,8 @@ class Focuser(Driver):
 
     MIN_POSITION = 0
     MAX_POSITION = 64500
+    MIN_SPEED = 10
+    MAX_SPEED = 300
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,14 +58,31 @@ class Focuser(Driver):
         vectors=dict(
             position=standard.focuser.AbsolutePosition(min=MIN_POSITION, max=MAX_POSITION, step=1),
             motion=standard.focuser.FocusMotion(),
-            rel_position=standard.focuser.RelativePosition(),
-            fmax=standard.focuser.FocusMax(),
+            rel_position=standard.focuser.RelativePosition(
+                min=1, max=MAX_POSITION - MIN_POSITION, step=1
+            ),
+            fmax=properties.NumberVector(
+                "FOCUS_MAX",
+                perm=const.Permissions.READ_ONLY,
+                elements=dict(
+                    max=properties.Number(
+                        "FOCUS_MAX_VALUE",
+                        default=MAX_POSITION,
+                        min=MIN_POSITION,
+                        max=MAX_POSITION,
+                        step=1,
+                    )
+                ),
+            ),
             speed=properties.NumberVector(
                 "SPEED",
                 elements=dict(
                     speed=properties.Number(
                         "SPEED_VALUE",
                         default=100,
+                        min=MIN_SPEED,
+                        max=MAX_SPEED,
+                        step=1,
                     )
                 ),
             ),

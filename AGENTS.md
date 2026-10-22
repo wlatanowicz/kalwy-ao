@@ -27,7 +27,7 @@ Commands are one JSON object per write, with no trailing newline on the Pi side:
 
 `contrib/nodefocuser/` is MicroPython (`machine`, `uos`), not CPython. `boot.py` starts WebREPL and `focuser.py`. The Pi driver does not flash the board. Do not rewrite this tree with CPython-only APIs, and do not run it under uv.
 
-Position limits `0`–`64500` are duplicated in `Focuser.MIN_POSITION` / `MAX_POSITION` and `Device.MIN_POSITION` / `MAX_POSITION`. Change both together. Firmware speed is clamped to `10`–`300` (default `250`). The INDI speed property defaults to `100` and does not clamp. The firmware accepts `{"park": true}`; the Pi driver never sends it.
+Position limits `0`–`64500` are duplicated in `Focuser.MIN_POSITION` / `MAX_POSITION` and `Device.MIN_POSITION` / `MAX_POSITION`. Change both together. Firmware speed is clamped to `10`–`300` (default `250`). The INDI speed property advertises min `10`, max `300`, and step `1`, and defaults to `100`. The driver does not clamp speed writes; the firmware does. The firmware accepts `{"park": true}`; the Pi driver never sends it.
 
 ## Lightbox
 
