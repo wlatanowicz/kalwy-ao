@@ -113,10 +113,20 @@ class Focuser(Driver):
         value = event.new_value
         current_position = self.position.position.position.value
         direction = 1 if self.position.motion.outward.bool_value else -1
-        new_value = current_position + direction * value
+        target = round(current_position + direction * value)
+        relative = self.position.rel_position
 
-        self.position.rel_position.state_ = const.State.BUSY
-        self.focuser.set_position(new_value)
+        if target < self.MIN_POSITION or target > self.MAX_POSITION:
+            relative.state_ = const.State.ALERT
+            return
+
+        if target == round(current_position) and self.focuser.get_status() == "idle":
+            if relative.state_ != const.State.OK:
+                relative.state_ = const.State.OK
+            return
+
+        relative.state_ = const.State.BUSY
+        self.focuser.set_position(target)
 
     def device_updated(self):
         status = self.focuser.get_status()
