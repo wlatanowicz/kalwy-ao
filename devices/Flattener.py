@@ -67,6 +67,7 @@ class Flattener(Driver):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._published_light_state = None
         self.backend = HomeAssistantLight(
             ha_host=settings.HA_HOST,
             ha_token=settings.HA_TOKEN,
@@ -106,12 +107,18 @@ class Flattener(Driver):
 
     def on_update(self):
         state = self.backend.current_state
+        light = self.main_control.light_control
+        expected = const.State.OK if state in ("on", "off") else const.State.ALERT
+        if state == self._published_light_state and light.state_ == expected:
+            return
 
         if state == "on":
-            self.main_control.light_control.on.bool_value = True
-            self.main_control.light_control.state_ = const.State.OK
+            light.on.bool_value = True
+            light.state_ = const.State.OK
         elif state == "off":
-            self.main_control.light_control.off.bool_value = True
-            self.main_control.light_control.state_ = const.State.OK
+            light.off.bool_value = True
+            light.state_ = const.State.OK
         else:
-            self.main_control.light_control.state_ = const.State.ALERT
+            light.state_ = const.State.ALERT
+
+        self._published_light_state = state
