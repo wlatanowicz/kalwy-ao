@@ -111,17 +111,36 @@ class Focuser(Driver):
     @on(position.rel_position.position, Write)
     def step(self, event):
         value = event.new_value
-        self.position.rel_position.position.state_ = const.State.BUSY
         current_position = self.position.position.position.value
         direction = 1 if self.position.motion.outward.bool_value else -1
-        new_value = current_position + direction * value
+        target = round(current_position + direction * value)
+        relative = self.position.rel_position
 
-        self.focuser.set_position(new_value)
+        if target < self.MIN_POSITION or target > self.MAX_POSITION:
+            relative.state_ = const.State.ALERT
+            return
 
-        self.position.rel_position.position.state_ = const.State.OK
+        if target == round(current_position) and self.focuser.get_status() == "idle":
+            if relative.state_ != const.State.OK:
+                relative.state_ = const.State.OK
+            return
+
+        relative.state_ = const.State.BUSY
+        self.focuser.set_position(target)
 
     def device_updated(self):
-        self.position.position.position.state_ = (
-            const.State.OK if self.focuser.get_status() == "idle" else const.State.BUSY
-        )
-        self.position.position.position.value = self.focuser.get_position()
+        status = self.focuser.get_status()
+        position = self.focuser.get_position()
+        absolute = self.position.position
+
+        if status == "move":
+            if absolute.state_ != const.State.BUSY:
+                absolute.state_ = const.State.BUSY
+            absolute.position.value = position
+        elif status == "idle":
+            absolute.position.value = position
+            if absolute.state_ != const.State.OK:
+                absolute.state_ = const.State.OK
+            relative = self.position.rel_position
+            if relative.state_ != const.State.OK:
+                relative.state_ = const.State.OK
