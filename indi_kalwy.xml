@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driversList>
+  <devGroup group="Focusers">
+    <device label="kalwy focuser" mdpd="true" manufacturer="Kalwy">
+      <driver name="Focuser">/home/astroberry/kalwy-ao/tty-focuser.py</driver>
+      <version>1.0</version>
+    </device>
+  </devGroup>
+  <devGroup group="Auxiliary">
+    <device label="kalwy lightbox" mdpd="true" manufacturer="Kalwy">
+      <driver name="Lightbox">/home/astroberry/kalwy-ao/tty-lightbox.py</driver>
+      <version>1.0</version>
+    </device>
+  </devGroup>
+</driversList>
